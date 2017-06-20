@@ -1,0 +1,15 @@
+{
+    "expectedSourceDirName": "src",
+    "expectedTestsDirName": "test",
+    "expectedComponentConfigFileName": ".yabs",
+    "buildDirName": "build",
+    "sourceFileExtensionToLanguageMap": {
+        ".c": "c",
+        ".cpp": "cpp",
+        ".cxx": "cpp",
+        ".cc": "cpp",
+        ".S": "asm",
+        ".s": "asm",
+        ".asm": "asm"
+    }
+}

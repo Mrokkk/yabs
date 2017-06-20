@@ -1,0 +1,12 @@
+{
+    "name": "yabs",
+    "authors": [
+        "Mrokkk"
+    ],
+    "description": "Yet Another Build System",
+    "copyright": "Copyright © 2017, Mrokkk",
+    "license": "MIT",
+    "dependencies": {
+        "vibe-d": "~>0.7.31"
+    }
+}

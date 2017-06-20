@@ -1,0 +1,11 @@
+{
+    "defaultCompiler": "g++",
+    "sourceFileExtensions": [
+        ".cpp", ".cxx", ".cc"
+    ],
+    "headerFileExtensions": [
+        ".hpp", ".hxx", ".hh", ".h"
+    ],
+    "defaultLinker": "g++",
+    "objectFileExtension": ".o"
+}
