@@ -3,6 +3,8 @@
     "expectedTestsDirName": "test",
     "expectedComponentConfigFileName": ".yabs",
     "buildDirName": "build",
+    "applicationBuild": "",
+    "libraryBuild": "",
     "sourceFileExtensionToLanguageMap": {
         ".c": "c",
         ".cpp": "cpp",
