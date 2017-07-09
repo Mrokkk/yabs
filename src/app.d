@@ -17,6 +17,8 @@ int main(string[] args) {
     auto configReader = new ConfigReader(filesystemFacade);
     auto yabsConfig = configReader.readYabsConfig(baseDir);
 
+    auto projectConfig = configReader.readProjectConfig(yabsConfig, currentDir);
+
     return 0;
 }
 
