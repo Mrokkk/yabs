@@ -7,6 +7,15 @@ import config_reader;
 import filesystem_facade;
 import interfaces.filesystem_facade;
 
+class SourceFilesConfig {
+    string compileFlags;
+}
+
+class SourceFilesGroup {
+    string[] sourceFiles;
+    SourceFilesConfig config;
+}
+
 int main(string[] args) {
 
     auto filesystemFacade = new FilesystemFacade;
