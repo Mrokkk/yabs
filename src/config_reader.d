@@ -29,9 +29,6 @@ class ConfigReader {
 
     ProjectConfig readProjectConfig(YabsConfig yabsConfig, const string projectRoot) {
         immutable auto configFileName = buildPath(projectRoot, yabsConfig.expectedComponentConfigFileName);
-        if (!filesystemFacade_.fileExists(configFileName)) {
-            return new ProjectConfig;
-        }
         auto json = filesystemFacade_.readText(configFileName).parseJsonString;
         auto projectConfig = json.deserializeJson!ProjectConfig;
         projectConfig.rootDir = projectRoot;
