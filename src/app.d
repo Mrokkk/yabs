@@ -2,10 +2,9 @@ module app;
 
 import std.stdio;
 import std.array;
-import std.algorithm;
+import std.format;
 import vibe.data.json;
-import std.file: DirEntry;
-import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName, dirName;
+import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName;
 
 import yabs_config;
 import config_reader;
@@ -21,18 +20,6 @@ class SourceFilesGroup {
     SourceFilesConfig config;
 }
 
-class Directory {
-
-    this(const string path, SourceFilesConfig config) {
-        this.path = path;
-        this.config = config;
-    }
-
-    string path;
-    string[] sourceFiles;
-    SourceFilesConfig config;
-}
-
 class TreeReader {
 
     this(IFilesystemFacade filesystemFacade, YabsConfig yabsConfig) {
@@ -40,43 +27,53 @@ class TreeReader {
         yabsConfig_ = yabsConfig;
     }
 
-    private SourceFilesConfig readConfig(const string configFileName, SourceFilesConfig defaultConfig) {
-        if (filesystemFacade_.fileExists(configFileName)) {
-        }
-        return defaultConfig;
+    SourceFilesConfig readConfig(const string path, SourceFilesConfig defaultConfig) {
+        auto json = filesystemFacade_.readText(path).parseJsonString;
+        auto config = new SourceFilesConfig;
+        config.compileFlags = defaultConfig.compileFlags ~ " " ~ json["additionalFlags"].get!string();
+        return config;
     }
 
-    private void readSourceDirRecursive(string dirName, SourceFilesConfig buildConfig, ref Directory[] directories) {
-        auto configFile = buildPath(dirName, yabsConfig_.expectedComponentConfigFileName);
-        auto directoryConfig = readConfig(configFile, buildConfig);
-        auto directory = new Directory(dirName, directoryConfig);
-        auto entries = filesystemFacade_.listDir(dirName, SpanMode.shallow);
+    void readRecursively(const string path, SourceFilesConfig config, ref SourceFilesGroup[] groups) {
+        auto entries = filesystemFacade_.listDir(path, SpanMode.shallow);
+        auto configFile = buildPath(path, yabsConfig_.expectedComponentConfigFileName);
+        if (groups.empty) {
+            groups ~= new SourceFilesGroup;
+        }
+        auto currentGroup = groups[$-1];
+        if (filesystemFacade_.fileExists(configFile)) {
+            auto newGroup = new SourceFilesGroup;
+            newGroup.config = readConfig(configFile, config);
+            config = newGroup.config;
+            groups ~= newGroup;
+            currentGroup = groups[$-1];
+        }
         foreach (entry; entries) {
             if (entry.isDir) {
-                readSourceDirRecursive(entry.name, directory.config, directories);
+                readRecursively(entry.name, config, groups);
             }
             else if (entry.isFile) {
-                if (entry.name.extension in yabsConfig_.sourceFileExtensionToLanguageMap) {
-                    directory.sourceFiles ~= entry.name;
+                if (entry.name.extension in yabsConfig_.sourceFileExtensionToLanguageMap
+                        && entry.name.baseName.stripExtension != "main") {
+                    currentGroup.sourceFiles ~= entry.name;
                 }
             }
         }
-        directories ~= directory;
     }
 
-    Directory[] read(const string root) {
-        Directory[] directories;
-        readSourceDirRecursive(root, new SourceFilesConfig, directories);
-        foreach (dir; directories) {
-            writeln(dir.sourceFiles);
+    SourceFilesGroup[] read(const string path) {
+        SourceFilesGroup[] groups;
+        readRecursively(path, new SourceFilesConfig, groups);
+        foreach (g; groups) {
+            if (!g.sourceFiles.empty)
+                writeln("%s %s".format(g.sourceFiles, g.config.compileFlags));
         }
-        return directories;
+        return groups;
     }
 
 private:
     IFilesystemFacade filesystemFacade_;
     YabsConfig yabsConfig_;
-
 }
 
 int main(string[] args) {
