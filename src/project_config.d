@@ -10,4 +10,3 @@ class ProjectConfig {
     string targetType;
 }
 
-

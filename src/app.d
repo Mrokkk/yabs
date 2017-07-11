@@ -1,79 +1,28 @@
 module app;
 
 import std.stdio;
-import std.array;
-import std.format;
-import vibe.data.json;
-import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName;
+import std.path: dirName, absolutePath;
 
+import tree_reader;
 import yabs_config;
 import config_reader;
 import filesystem_facade;
 import interfaces.filesystem_facade;
 
-class SourceFilesConfig {
-    string compileFlags;
-}
+class Task {
 
-class SourceFilesGroup {
-    string[] sourceFiles;
-    SourceFilesConfig config;
-}
+    immutable string command;
+    const string[] input;
+    immutable string output;
+    Task[] dependencies;
 
-class TreeReader {
-
-    this(IFilesystemFacade filesystemFacade, YabsConfig yabsConfig) {
-        filesystemFacade_ = filesystemFacade;
-        yabsConfig_ = yabsConfig;
+    this(const string command, const string[] input, const string output, ref Task[] dependencies) {
+        this.command = command;
+        this.input = input;
+        this.output = output;
+        this.dependencies = dependencies;
     }
 
-    SourceFilesConfig readConfig(const string path, SourceFilesConfig defaultConfig) {
-        auto json = filesystemFacade_.readText(path).parseJsonString;
-        auto config = new SourceFilesConfig;
-        config.compileFlags = defaultConfig.compileFlags ~ " " ~ json["additionalFlags"].get!string();
-        return config;
-    }
-
-    void readRecursively(const string path, SourceFilesConfig config, ref SourceFilesGroup[] groups) {
-        auto entries = filesystemFacade_.listDir(path, SpanMode.shallow);
-        auto configFile = buildPath(path, yabsConfig_.expectedComponentConfigFileName);
-        if (groups.empty) {
-            groups ~= new SourceFilesGroup;
-        }
-        auto currentGroup = groups[$-1];
-        if (filesystemFacade_.fileExists(configFile)) {
-            auto newGroup = new SourceFilesGroup;
-            newGroup.config = readConfig(configFile, config);
-            config = newGroup.config;
-            groups ~= newGroup;
-            currentGroup = groups[$-1];
-        }
-        foreach (entry; entries) {
-            if (entry.isDir) {
-                readRecursively(entry.name, config, groups);
-            }
-            else if (entry.isFile) {
-                if (entry.name.extension in yabsConfig_.sourceFileExtensionToLanguageMap
-                        && entry.name.baseName.stripExtension != "main") {
-                    currentGroup.sourceFiles ~= entry.name;
-                }
-            }
-        }
-    }
-
-    SourceFilesGroup[] read(const string path) {
-        SourceFilesGroup[] groups;
-        readRecursively(path, new SourceFilesConfig, groups);
-        foreach (g; groups) {
-            if (!g.sourceFiles.empty)
-                writeln("%s %s".format(g.sourceFiles, g.config.compileFlags));
-        }
-        return groups;
-    }
-
-private:
-    IFilesystemFacade filesystemFacade_;
-    YabsConfig yabsConfig_;
 }
 
 int main(string[] args) {
