@@ -27,6 +27,7 @@ int main(string[] args) {
 
     auto baseDir = args[0].absolutePath.dirName;
     auto currentDir = filesystemFacade.getCurrentDir();
+    auto projectName = currentDir.baseName();
 
     auto configReader = new ConfigReader(filesystemFacade);
     auto yabsConfig = configReader.readYabsConfig(baseDir);
@@ -46,7 +47,7 @@ int main(string[] args) {
     }
 
     auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
-    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(sourceGroups);
+    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName, sourceGroups);
 
     auto taskRunner = new TaskRunner(filesystemFacade);
     if (targetType == TargetType.application) {

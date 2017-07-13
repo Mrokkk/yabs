@@ -30,14 +30,15 @@ class TaskCreator {
         }
     }
 
-    Task createSharedLibraryTask(const ref SourceFilesGroup[] sourceGroups) {
+    Task createSharedLibraryTask(const string name, const ref SourceFilesGroup[] sourceGroups) {
         Task[] tasks;
         foreach (group; sourceGroups) {
             addTasks(group, tasks);
         }
+        auto libraryFileName = "lib%s.so".format(name);
         return new Task("g++ -shared -o %s %(%s%| %)".format(
-                    "liba.so", tasks.map!(a => a.output).array),
-                tasks.map!(a => a.input[0]).array, "liba.so", tasks);
+                    libraryFileName, tasks.map!(a => a.output).array),
+                tasks.map!(a => a.input[0]).array, libraryFileName, tasks);
     }
 
 private:
