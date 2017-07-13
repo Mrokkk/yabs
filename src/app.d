@@ -47,13 +47,21 @@ int main(string[] args) {
     }
 
     auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
-    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName, sourceGroups);
+    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName, sourceGroups[0 .. $-1]);
+
+    Task targetTask;
 
     auto taskRunner = new TaskRunner(filesystemFacade);
     if (targetType == TargetType.application) {
+        Task[] libs;
+        libs ~= sharedLibraryTask;
+        targetTask = taskCreator.createApplicationTask(projectName, sourceGroups[$-1], libs);
+    }
+    else {
+        targetTask = sharedLibraryTask;
     }
 
-    taskRunner.call(sharedLibraryTask);
+    taskRunner.call(targetTask);
 
     return 0;
 }
