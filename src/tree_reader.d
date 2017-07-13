@@ -1,8 +1,6 @@
 module tree_reader;
 
-import std.stdio;
 import vibe.data.json;
-import std.format: format;
 import std.array: array, empty;
 import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName;
 
@@ -24,7 +22,7 @@ class TreeReader {
         return config;
     }
 
-    void readRecursively(const string path, SourceFilesConfig config, ref SourceFilesGroup[] groups) {
+    SourceFilesGroup readRecursively(const string path, SourceFilesConfig config, ref SourceFilesGroup[] groups) {
         auto entries = filesystemFacade_.listDir(path, SpanMode.shallow);
         auto configFile = buildPath(path, yabsConfig_.expectedComponentConfigFileName);
         if (groups.empty) {
@@ -38,24 +36,31 @@ class TreeReader {
             groups ~= newGroup;
             currentGroup = groups[$-1];
         }
+        auto mainGroup = new SourceFilesGroup;
         foreach (entry; entries) {
             if (entry.isDir) {
                 readRecursively(entry.name, config, groups);
             }
             else if (entry.isFile) {
                 if (entry.name.extension in yabsConfig_.sourceFileExtensionToLanguageMap) {
-                    currentGroup.sourceFiles ~= entry.name;
+                    if (entry.name.baseName.stripExtension == "main") {
+                        mainGroup.sourceFiles ~= entry.name;
+                        mainGroup.config = config;
+                    }
+                    else {
+                        currentGroup.sourceFiles ~= entry.name;
+                    }
                 }
             }
         }
+        return mainGroup;
     }
 
     SourceFilesGroup[] read(const string path) {
         SourceFilesGroup[] groups;
-        readRecursively(path, new SourceFilesConfig, groups);
-        foreach (g; groups) {
-            if (!g.sourceFiles.empty)
-                writeln("%s %s".format(g.sourceFiles, g.config.compileFlags));
+        auto mainGroup = readRecursively(path, new SourceFilesConfig, groups);
+        if (!mainGroup.sourceFiles.empty) {
+            groups ~= mainGroup;
         }
         return groups;
     }
