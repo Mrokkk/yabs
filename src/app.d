@@ -47,7 +47,10 @@ int main(string[] args) {
     }
 
     auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
-    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName, sourceGroups[0 .. $-1]);
+    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName,
+            targetType == TargetType.application
+                ? sourceGroups[0 .. $-1]
+                : sourceGroups);
 
     Task targetTask;
 
