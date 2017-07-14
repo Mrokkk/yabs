@@ -27,6 +27,7 @@ class TreeReader {
         auto configFile = buildPath(path, yabsConfig_.expectedComponentConfigFileName);
         if (groups.empty) {
             groups ~= new SourceFilesGroup;
+            groups[$-1].config = config;
         }
         auto currentGroup = groups[$-1];
         if (filesystemFacade_.fileExists(configFile)) {
