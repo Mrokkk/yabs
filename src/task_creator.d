@@ -35,7 +35,7 @@ class TaskCreator {
         foreach (group; sourceGroups) {
             addTasks(group, tasks);
         }
-        auto libraryFileName = "lib%s.so".format(name);
+        auto libraryFileName = buildPath(projectConfig_.buildDir, "lib%s.so".format(name));
         return new Task("g++ -shared -o %s %(%s%| %)".format(
                     libraryFileName, tasks.map!(a => a.output).array),
                 tasks.map!(a => a.input[0]).array, libraryFileName, tasks);
@@ -49,7 +49,7 @@ class TaskCreator {
         input ~= main.sourceFiles;
         input ~= libraries.map!(a => a.output).array;
         return new Task("g++ -o %s -Wl,-rpath=%s %(%s%| %)".format(
-                    name, projectConfig_.rootDir, input),
+                    name, projectConfig_.buildDir, input),
                 input, name, deps);
     }
 

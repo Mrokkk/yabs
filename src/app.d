@@ -30,8 +30,8 @@ int main(string[] args) {
     auto projectName = currentDir.baseName();
 
     auto configReader = new ConfigReader(filesystemFacade);
-    auto yabsConfig = configReader.readYabsConfig(baseDir);
 
+    auto yabsConfig = configReader.readYabsConfig(baseDir);
     auto projectConfig = configReader.readProjectConfig(yabsConfig, currentDir);
 
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
@@ -65,6 +65,11 @@ int main(string[] args) {
     }
 
     taskRunner.call(targetTask);
+
+    if (targetType == TargetType.application) {
+        auto pid = spawnShell("./" ~ projectName);
+        wait(pid);
+    }
 
     return 0;
 }
