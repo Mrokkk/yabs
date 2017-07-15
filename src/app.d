@@ -2,8 +2,6 @@ module app;
 
 import std.path;
 import std.stdio;
-import std.array;
-import std.format;
 import std.process;
 
 import task;
@@ -19,6 +17,15 @@ import interfaces.filesystem_facade;
 
 enum TargetType {
     application, library
+}
+
+TargetType deduceTargetType(const ref SourceFilesGroup[] sourceGroups) {
+    if (sourceGroups[$-1].sourceFiles[0].baseName.stripExtension == "main") {
+        return TargetType.application;
+    }
+    else {
+        return TargetType.library;
+    }
 }
 
 int main(string[] args) {
@@ -37,14 +44,7 @@ int main(string[] args) {
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
     auto sourceGroups = treeReader.read(projectConfig.sourceDir);
 
-    TargetType targetType;
-
-    if (sourceGroups[$-1].sourceFiles[0].baseName.stripExtension == "main") {
-        targetType = TargetType.application;
-    }
-    else {
-        targetType = TargetType.library;
-    }
+    auto targetType = deduceTargetType(sourceGroups);
 
     auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
     auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName,
@@ -54,23 +54,20 @@ int main(string[] args) {
 
     Task targetTask;
 
+    filesystemFacade.makeDir(projectConfig.buildDir);
     auto taskRunner = new TaskRunner(filesystemFacade);
     if (targetType == TargetType.application) {
         Task[] libs;
         libs ~= sharedLibraryTask;
         targetTask = taskCreator.createApplicationTask(projectName, sourceGroups[$-1], libs);
+        taskRunner.call(targetTask);
+        auto pid = spawnShell(buildPath(currentDir, projectName));
+        wait(pid);
     }
     else {
         targetTask = sharedLibraryTask;
+        taskRunner.call(targetTask);
     }
-
-    taskRunner.call(targetTask);
-
-    if (targetType == TargetType.application) {
-        auto pid = spawnShell("./" ~ projectName);
-        wait(pid);
-    }
-
     return 0;
 }
 

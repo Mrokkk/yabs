@@ -22,8 +22,7 @@ class TaskCreator {
         foreach (sourceFile; group.sourceFiles) {
             auto outputFile = buildPath("build", sourceFile.relativePath(projectConfig_.rootDir)
                 .setExtension(".o"));
-            string[] input;
-            input ~= sourceFile;
+            auto input = [sourceFile, group.config.configFile];
             tasks ~= new Task("g++ -c -MMD -fPIC -shared%s -o %s %s".format(
                         group.config.compileFlags, outputFile, sourceFile),
                     input, outputFile, emptyDeps);
