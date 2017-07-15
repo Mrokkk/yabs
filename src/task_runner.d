@@ -3,6 +3,7 @@ module task_runner;
 import std.path;
 import std.stdio;
 import std.format;
+import std.string;
 import std.process;
 
 import task;
@@ -19,6 +20,9 @@ class TaskRunner {
             return true;
         }
         foreach (object; objects) {
+            if (object.empty) {
+                continue;
+            }
             if (filesystemFacade_.lastModificationTime(targetName) <
                     filesystemFacade_.lastModificationTime(object)) {
                 return true;

@@ -1,8 +1,12 @@
 module app;
 
+import std.conv;
 import std.path;
 import std.stdio;
+import std.format;
+import std.getopt;
 import std.process;
+import core.stdc.stdlib;
 
 import task;
 import tree_reader;
@@ -28,8 +32,51 @@ TargetType deduceTargetType(const ref SourceFilesGroup[] sourceGroups) {
     }
 }
 
+enum Command {
+    build, test, run
+}
+
+enum BuildType {
+    debugBuild, releaseBuild
+}
+
+class Options {
+    Command command = Command.run;
+    BuildType buildType = BuildType.debugBuild;
+    bool verbose = false;
+}
+
+Options parseArgs(ref string[] args) {
+    auto options = new Options;
+    string[] args2;
+    if (args.length < 2 || args[1][0] == '-') {
+        args2 = args;
+    }
+    else {
+        args2 = args[1 .. $];
+        try {
+            options.command = args[1].to!Command;
+        }
+        catch (Exception) {
+            writeln("No such command: %s".format(args[1]));
+            exit(-1);
+        }
+    }
+    auto helpInformation = getopt(args2,
+            "v|verbose", "Print verbose messages", &options.verbose
+    );
+
+    if (helpInformation.helpWanted) {
+        defaultGetoptPrinter("yabs - simple C/C++ build system\nUsage:\n\tyabs command ...",
+            helpInformation.options);
+        exit(0);
+    }
+    return options;
+}
+
 int main(string[] args) {
 
+    auto options = parseArgs(args);
     auto filesystemFacade = new FilesystemFacade;
 
     auto baseDir = args[0].absolutePath.dirName;
@@ -53,16 +100,19 @@ int main(string[] args) {
                 : sourceGroups);
 
     Task targetTask;
+    auto taskRunner = new TaskRunner(filesystemFacade);
 
     filesystemFacade.makeDir(projectConfig.buildDir);
-    auto taskRunner = new TaskRunner(filesystemFacade);
+
     if (targetType == TargetType.application) {
         Task[] libs;
         libs ~= sharedLibraryTask;
         targetTask = taskCreator.createApplicationTask(projectName, sourceGroups[$-1], libs);
         taskRunner.call(targetTask);
-        auto pid = spawnShell(buildPath(currentDir, projectName));
-        wait(pid);
+        if (options.command == Command.run) {
+            auto pid = spawnShell(buildPath(currentDir, projectName));
+            wait(pid);
+        }
     }
     else {
         targetTask = sharedLibraryTask;
