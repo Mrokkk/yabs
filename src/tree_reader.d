@@ -6,7 +6,7 @@ import std.array: array, empty;
 import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName;
 
 import yabs_config;
-import source_files_group;;
+public import source_files_group;
 import interfaces.filesystem_facade;
 
 class TreeReader {

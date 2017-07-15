@@ -8,7 +8,9 @@ import std.getopt;
 import std.process;
 import core.stdc.stdlib;
 
-import task;
+import interfaces.builder;
+import interfaces.filesystem_facade;
+
 import args_parser;
 import tree_reader;
 import task_runner;
@@ -18,7 +20,10 @@ import config_reader;
 import project_config;
 import filesystem_facade;
 import source_files_group;
-import interfaces.filesystem_facade;
+
+import builders.tests_builder;
+import builders.library_builder;
+import builders.application_builder;
 
 enum TargetType {
     application, library
@@ -31,103 +36,6 @@ TargetType deduceTargetType(const ref SourceFilesGroup[] sourceGroups) {
     else {
         return TargetType.library;
     }
-}
-
-interface IBuilder {
-    void build(BuildType buildType);
-}
-
-class ApplicationBuilder : IBuilder {
-
-    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig, TreeReader treeReader,
-            TaskCreator taskCreator, TaskRunner taskRunner) {
-        filesystemFacade_ = filesystemFacade;
-        projectConfig_ = projectConfig;
-        treeReader_ = treeReader;
-        taskCreator_ = taskCreator;
-        taskRunner_ = taskRunner;
-    }
-
-    void build(BuildType buildType) {
-        auto sourceFilesGroups = treeReader_.read(projectConfig_.sourceDir);
-        auto sharedLibraryTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
-                sourceFilesGroups[0 .. $-1]);
-        Task targetTask;
-        auto libs = [sharedLibraryTask];
-        targetTask = taskCreator_.createApplicationTask(projectConfig_.projectName, sourceFilesGroups[$-1], libs);
-        taskRunner_.call(targetTask);
-    }
-
-private:
-    IFilesystemFacade filesystemFacade_;
-    ProjectConfig projectConfig_;
-    TreeReader treeReader_;
-    TaskCreator taskCreator_;
-    TaskRunner taskRunner_;
-}
-
-class LibraryBuilder : IBuilder {
-
-    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig, TreeReader treeReader,
-            TaskCreator taskCreator, TaskRunner taskRunner) {
-        filesystemFacade_ = filesystemFacade;
-        projectConfig_ = projectConfig;
-        treeReader_ = treeReader;
-        taskCreator_ = taskCreator;
-        taskRunner_ = taskRunner;
-    }
-
-    void build(BuildType buildType) {
-        auto sourceFilesGroups = treeReader_.read(projectConfig_.sourceDir);
-        auto sharedLibraryTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
-                sourceFilesGroups);
-        taskRunner_.call(sharedLibraryTask);
-    }
-
-private:
-    IFilesystemFacade filesystemFacade_;
-    ProjectConfig projectConfig_;
-    TreeReader treeReader_;
-    TaskCreator taskCreator_;
-    TaskRunner taskRunner_;
-}
-
-class TestsBuilder : IBuilder {
-
-    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig, TreeReader treeReader,
-            TaskCreator taskCreator, TaskRunner taskRunner) {
-        filesystemFacade_ = filesystemFacade;
-        projectConfig_ = projectConfig;
-        treeReader_ = treeReader;
-        taskCreator_ = taskCreator;
-        taskRunner_ = taskRunner;
-    }
-
-    void build(BuildType buildType) {
-        auto sourceTree = treeReader_.read(projectConfig_.sourceDir);
-        auto sourceSharedLibTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
-                sourceTree[0 .. $-1]);
-        Task[] libs = [sourceSharedLibTask];
-        auto testsTree = treeReader_.read(projectConfig_.testsDir);
-        try {
-            auto testsLibName = projectConfig_.projectName ~ "_tests";
-            auto testsSharedLibTask = taskCreator_.createSharedLibraryTask(testsLibName,
-                    testsTree[0 .. $-1]);
-            libs ~= testsSharedLibTask;
-        }
-        catch (Error) {
-        }
-        auto testsApplicationName = projectConfig_.projectName ~ "_tests";
-        auto targetTask = taskCreator_.createApplicationTask(testsApplicationName, testsTree[$-1], libs);
-        taskRunner_.call(targetTask);
-    }
-
-private:
-    IFilesystemFacade filesystemFacade_;
-    ProjectConfig projectConfig_;
-    TreeReader treeReader_;
-    TaskCreator taskCreator_;
-    TaskRunner taskRunner_;
 }
 
 int main(string[] args) {

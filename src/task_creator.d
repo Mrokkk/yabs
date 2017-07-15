@@ -5,7 +5,7 @@ import std.array;
 import std.format;
 import std.algorithm;
 
-import task;
+public import task;
 import project_config;
 import source_files_group;
 import interfaces.filesystem_facade;

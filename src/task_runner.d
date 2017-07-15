@@ -6,7 +6,7 @@ import std.format;
 import std.string;
 import std.process;
 
-import task;
+public import task;
 import interfaces.filesystem_facade;
 
 class TaskRunner {
