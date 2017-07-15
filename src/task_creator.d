@@ -20,7 +20,7 @@ class TaskCreator {
     private void addTasks(const ref SourceFilesGroup group, ref Task[] tasks) {
         Task[] emptyDeps;
         foreach (sourceFile; group.sourceFiles) {
-            auto outputFile = buildPath("build", sourceFile.relativePath(projectConfig_.rootDir)
+            auto outputFile = buildPath(projectConfig_.buildDir, sourceFile.relativePath(projectConfig_.rootDir)
                 .setExtension(".o"));
             auto input = [sourceFile, group.config.configFile];
             tasks ~= new Task("g++ -c -MMD -fPIC -shared%s -o %s %s".format(

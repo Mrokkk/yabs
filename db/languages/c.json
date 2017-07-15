@@ -1,11 +1,5 @@
 {
     "defaultCompiler": "gcc",
-    "sourceFileExtensions": [
-        ".c"
-    ],
-    "headerFileExtensions": [
-        ".h"
-    ],
     "defaultLinker": "g++",
     "objectFileExtension": ".o"
 }
