@@ -14,7 +14,7 @@ class TaskRunner {
         filesystemFacade_ = filesystemFacade;
     }
 
-    private bool isOutdated(string targetName, const string[] objects) {
+    private bool isOutdated(const ref string targetName, const string[] objects) {
         if (!filesystemFacade_.fileExists(targetName)) {
             return true;
         }
@@ -27,7 +27,7 @@ class TaskRunner {
         return false;
     }
 
-    void call(Task task) {
+    void call(const Task task) {
         foreach (t; task.dependencies) {
             call(t);
         }

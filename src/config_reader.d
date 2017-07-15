@@ -13,7 +13,7 @@ class ConfigReader {
         filesystemFacade_ = filesystemFacade;
     }
 
-    YabsConfig readYabsConfig(const string dir) {
+    YabsConfig readYabsConfig(const ref string dir) {
         immutable string configFileName = "db/config.json";
         immutable string languagesInfoDir = "db/languages";
         auto json = filesystemFacade_.readText(buildPath(dir, configFileName))
@@ -27,7 +27,7 @@ class ConfigReader {
         return json.deserializeJson!YabsConfig;
     }
 
-    ProjectConfig readProjectConfig(YabsConfig yabsConfig, const string projectRoot) {
+    ProjectConfig readProjectConfig(YabsConfig yabsConfig, const ref string projectRoot) {
         immutable auto configFileName = buildPath(projectRoot, yabsConfig.expectedComponentConfigFileName);
         ProjectConfig projectConfig;
         try {

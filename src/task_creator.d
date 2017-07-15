@@ -30,7 +30,7 @@ class TaskCreator {
         }
     }
 
-    Task createSharedLibraryTask(const string name, SourceFilesGroup[] sourceGroups) {
+    Task createSharedLibraryTask(const ref string name, SourceFilesGroup[] sourceGroups) {
         Task[] tasks;
         foreach (group; sourceGroups) {
             addTasks(group, tasks);
@@ -41,7 +41,7 @@ class TaskCreator {
                 tasks.map!(a => a.input[0]).array, libraryFileName, tasks);
     }
 
-    Task createApplicationTask(const string name, const ref SourceFilesGroup main, Task[] libraries) {
+    Task createApplicationTask(const ref string name, const ref SourceFilesGroup main, Task[] libraries) {
         Task[] deps;
         addTasks(main, deps);
         deps ~= libraries;
