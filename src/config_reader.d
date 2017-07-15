@@ -31,13 +31,8 @@ class ConfigReader {
         auto projectRoot = filesystemFacade_.getCurrentDir();
         immutable auto configFileName = buildPath(projectRoot, yabsConfig.expectedComponentConfigFileName);
         ProjectConfig projectConfig;
-        try {
-            auto json = filesystemFacade_.readText(configFileName).parseJsonString;
-            projectConfig = json.deserializeJson!ProjectConfig;
-        }
-        catch(Exception) {
-            projectConfig = new ProjectConfig;
-        }
+        auto json = filesystemFacade_.readText(configFileName).parseJsonString;
+        projectConfig = json.deserializeJson!ProjectConfig;
         projectConfig.projectName = projectRoot.baseName;
         projectConfig.rootDir = projectRoot;
         projectConfig.sourceDir = buildPath(projectRoot, yabsConfig.expectedSourceDirName);

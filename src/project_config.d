@@ -1,6 +1,10 @@
 module project_config;
 
-import vibe.data.json: optional, ignore;
+import vibe.data.json: optional, ignore, byName;
+
+enum TargetType {
+    application, library
+}
 
 class ProjectConfig {
     @optional string projectName;
@@ -8,6 +12,6 @@ class ProjectConfig {
     @ignore string sourceDir;
     @ignore string testsDir;
     @ignore string buildDir;
-    string targetType;
+    @byName TargetType targetType;
 }
 

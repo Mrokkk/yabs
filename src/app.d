@@ -25,29 +25,20 @@ import builders.tests_builder;
 import builders.library_builder;
 import builders.application_builder;
 
-enum TargetType {
-    application, library
-}
+int main(string[] argv) {
 
-TargetType deduceTargetType(const ref SourceFilesGroup[] sourceGroups) {
-    if (sourceGroups[$-1].sourceFiles[0].baseName.stripExtension == "main") {
-        return TargetType.application;
-    }
-    else {
-        return TargetType.library;
-    }
-}
-
-int main(string[] args) {
-
-    auto options = ArgsParser.parseArgs(args);
+    auto args = ArgsParser.parseArgs(argv);
     auto filesystemFacade = new FilesystemFacade;
 
     auto configReader = new ConfigReader(filesystemFacade);
 
-    auto baseDir = args[0].absolutePath.dirName;
+    auto baseDir = argv[0].absolutePath.dirName;
     auto yabsConfig = configReader.readYabsConfig(baseDir);
     auto projectConfig = configReader.readProjectConfig(yabsConfig);
+
+    writeln("Project name: %s".format(projectConfig.projectName));
+    writeln("Target type: %s".format(projectConfig.targetType));
+    writeln("Build type: %s".format(args.buildType));
 
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
 
@@ -56,12 +47,12 @@ int main(string[] args) {
     auto taskRunner = new TaskRunner(filesystemFacade);
 
     IBuilder builder;
-    if (options.command == Command.test) {
+
+    if (args.command == Command.test) {
         builder = new TestsBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
     }
     else {
-        auto targetType = TargetType.application;
-        switch (targetType) {
+        switch (projectConfig.targetType) {
             case TargetType.application:
                 builder = new ApplicationBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
                 break;
@@ -71,12 +62,12 @@ int main(string[] args) {
             default: break;
         }
     }
-    builder.build(BuildType.debugBuild);
-    if (options.command == Command.run) {
+    builder.build(args.buildType);
+    if (args.command == Command.run) {
         auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName));
         wait(pid);
     }
-    else if (options.command == Command.test) {
+    else if (args.command == Command.test) {
         auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName ~ "_tests"));
         wait(pid);
     }
