@@ -27,7 +27,8 @@ class ConfigReader {
         return json.deserializeJson!YabsConfig;
     }
 
-    ProjectConfig readProjectConfig(YabsConfig yabsConfig, const ref string projectRoot) {
+    ProjectConfig readProjectConfig(YabsConfig yabsConfig) {
+        auto projectRoot = filesystemFacade_.getCurrentDir();
         immutable auto configFileName = buildPath(projectRoot, yabsConfig.expectedComponentConfigFileName);
         ProjectConfig projectConfig;
         try {
@@ -37,6 +38,7 @@ class ConfigReader {
         catch(Exception) {
             projectConfig = new ProjectConfig;
         }
+        projectConfig.projectName = projectRoot.baseName;
         projectConfig.rootDir = projectRoot;
         projectConfig.sourceDir = buildPath(projectRoot, yabsConfig.expectedSourceDirName);
         projectConfig.testsDir = buildPath(projectRoot, yabsConfig.expectedTestsDirName);

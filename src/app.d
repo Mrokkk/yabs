@@ -9,6 +9,7 @@ import std.process;
 import core.stdc.stdlib;
 
 import task;
+import args_parser;
 import tree_reader;
 import task_runner;
 import yabs_config;
@@ -32,61 +33,18 @@ TargetType deduceTargetType(const ref SourceFilesGroup[] sourceGroups) {
     }
 }
 
-enum Command {
-    build, test, run
-}
-
-enum BuildType {
-    debugBuild, releaseBuild
-}
-
-class Options {
-    Command command = Command.run;
-    BuildType buildType = BuildType.debugBuild;
-    bool verbose = false;
-}
-
-Options parseArgs(ref string[] args) {
-    auto options = new Options;
-    string[] args2;
-    if (args.length < 2 || args[1][0] == '-') {
-        args2 = args;
-    }
-    else {
-        args2 = args[1 .. $];
-        try {
-            options.command = args[1].to!Command;
-        }
-        catch (Exception) {
-            writeln("No such command: %s".format(args[1]));
-            exit(-1);
-        }
-    }
-    auto helpInformation = getopt(args2,
-            "v|verbose", "Print verbose messages", &options.verbose
-    );
-
-    if (helpInformation.helpWanted) {
-        defaultGetoptPrinter("yabs - simple C/C++ build system\nUsage:\n\tyabs command ...",
-            helpInformation.options);
-        exit(0);
-    }
-    return options;
-}
-
 int main(string[] args) {
 
-    auto options = parseArgs(args);
+    auto options = ArgsParser.parseArgs(args);
     auto filesystemFacade = new FilesystemFacade;
 
     auto baseDir = args[0].absolutePath.dirName;
     auto currentDir = filesystemFacade.getCurrentDir();
-    auto projectName = currentDir.baseName();
 
     auto configReader = new ConfigReader(filesystemFacade);
 
     auto yabsConfig = configReader.readYabsConfig(baseDir);
-    auto projectConfig = configReader.readProjectConfig(yabsConfig, currentDir);
+    auto projectConfig = configReader.readProjectConfig(yabsConfig);
 
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
     auto sourceGroups = treeReader.read(projectConfig.sourceDir);
@@ -94,7 +52,7 @@ int main(string[] args) {
     auto targetType = deduceTargetType(sourceGroups);
 
     auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
-    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectName,
+    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectConfig.projectName,
             targetType == TargetType.application
                 ? sourceGroups[0 .. $-1]
                 : sourceGroups);
@@ -107,10 +65,10 @@ int main(string[] args) {
     if (targetType == TargetType.application) {
         Task[] libs;
         libs ~= sharedLibraryTask;
-        targetTask = taskCreator.createApplicationTask(projectName, sourceGroups[$-1], libs);
+        targetTask = taskCreator.createApplicationTask(projectConfig.projectName, sourceGroups[$-1], libs);
         taskRunner.call(targetTask);
         if (options.command == Command.run) {
-            auto pid = spawnShell(buildPath(currentDir, projectName));
+            auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName));
             wait(pid);
         }
     }
