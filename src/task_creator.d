@@ -6,22 +6,26 @@ import std.format;
 import std.algorithm;
 
 public import task;
+import yabs_config;
 import project_config;
 import source_files_group;
 import interfaces.filesystem_facade;
 
 class TaskCreator {
 
-    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig) {
+    this(IFilesystemFacade filesystemFacade, YabsConfig yabsConfig, ProjectConfig projectConfig) {
         filesystemFacade_ = filesystemFacade;
+        yabsConfig_ = yabsConfig;
         projectConfig_ = projectConfig;
     }
 
     private void addTasks(const ref SourceFilesGroup group, ref Task[] tasks) {
         Task[] emptyDeps;
         foreach (sourceFile; group.sourceFiles) {
-            auto outputFile = buildPath(projectConfig_.buildDir, sourceFile.relativePath(projectConfig_.rootDir)
-                .setExtension(".o"));
+            auto language = yabsConfig_.sourceFileExtensionToLanguageMap[sourceFile.extension];
+            auto outputFile = buildPath(projectConfig_.buildDir,
+                    sourceFile.relativePath(projectConfig_.rootDir)
+                .setExtension(yabsConfig_.languagesInfo[language].objectFileExtension));
             auto input = [sourceFile, group.config.configFile];
             tasks ~= new Task("g++ -c -MMD -fPIC -shared%s -o %s %s".format(
                         group.config.compileFlags, outputFile, sourceFile),
@@ -60,6 +64,7 @@ class TaskCreator {
 
 private:
     IFilesystemFacade filesystemFacade_;
+    YabsConfig yabsConfig_;
     ProjectConfig projectConfig_;
 }
 

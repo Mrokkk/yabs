@@ -36,14 +36,15 @@ int main(string[] argv) {
     auto yabsConfig = configReader.readYabsConfig(baseDir);
     auto projectConfig = configReader.readProjectConfig(yabsConfig);
 
-    writeln("Project name: %s".format(projectConfig.projectName));
-    writeln("Target type: %s".format(projectConfig.targetType));
-    writeln("Build type: %s".format(args.buildType));
+    writeln("# Project name: %s".format(projectConfig.projectName));
+    writeln("# Target type: %s".format(projectConfig.targetType));
+    writeln("# Build type: %s".format(args.buildType));
+    writeln("");
 
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
 
     filesystemFacade.makeDir(projectConfig.buildDir);
-    auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
+    auto taskCreator = new TaskCreator(filesystemFacade, yabsConfig, projectConfig);
     auto taskRunner = new TaskRunner(filesystemFacade);
 
     IBuilder builder;
