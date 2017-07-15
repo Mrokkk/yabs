@@ -33,48 +33,144 @@ TargetType deduceTargetType(const ref SourceFilesGroup[] sourceGroups) {
     }
 }
 
+interface IBuilder {
+    void build(BuildType buildType);
+}
+
+class ApplicationBuilder : IBuilder {
+
+    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig, TreeReader treeReader,
+            TaskCreator taskCreator, TaskRunner taskRunner) {
+        filesystemFacade_ = filesystemFacade;
+        projectConfig_ = projectConfig;
+        treeReader_ = treeReader;
+        taskCreator_ = taskCreator;
+        taskRunner_ = taskRunner;
+    }
+
+    void build(BuildType buildType) {
+        auto sourceFilesGroups = treeReader_.read(projectConfig_.sourceDir);
+        auto sharedLibraryTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
+                sourceFilesGroups[0 .. $-1]);
+        Task targetTask;
+        auto libs = [sharedLibraryTask];
+        targetTask = taskCreator_.createApplicationTask(projectConfig_.projectName, sourceFilesGroups[$-1], libs);
+        taskRunner_.call(targetTask);
+    }
+
+private:
+    IFilesystemFacade filesystemFacade_;
+    ProjectConfig projectConfig_;
+    TreeReader treeReader_;
+    TaskCreator taskCreator_;
+    TaskRunner taskRunner_;
+}
+
+class LibraryBuilder : IBuilder {
+
+    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig, TreeReader treeReader,
+            TaskCreator taskCreator, TaskRunner taskRunner) {
+        filesystemFacade_ = filesystemFacade;
+        projectConfig_ = projectConfig;
+        treeReader_ = treeReader;
+        taskCreator_ = taskCreator;
+        taskRunner_ = taskRunner;
+    }
+
+    void build(BuildType buildType) {
+        auto sourceFilesGroups = treeReader_.read(projectConfig_.sourceDir);
+        auto sharedLibraryTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
+                sourceFilesGroups);
+        taskRunner_.call(sharedLibraryTask);
+    }
+
+private:
+    IFilesystemFacade filesystemFacade_;
+    ProjectConfig projectConfig_;
+    TreeReader treeReader_;
+    TaskCreator taskCreator_;
+    TaskRunner taskRunner_;
+}
+
+class TestsBuilder : IBuilder {
+
+    this(IFilesystemFacade filesystemFacade, ProjectConfig projectConfig, TreeReader treeReader,
+            TaskCreator taskCreator, TaskRunner taskRunner) {
+        filesystemFacade_ = filesystemFacade;
+        projectConfig_ = projectConfig;
+        treeReader_ = treeReader;
+        taskCreator_ = taskCreator;
+        taskRunner_ = taskRunner;
+    }
+
+    void build(BuildType buildType) {
+        auto sourceTree = treeReader_.read(projectConfig_.sourceDir);
+        auto sourceSharedLibTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
+                sourceTree[0 .. $-1]);
+        Task[] libs = [sourceSharedLibTask];
+        auto testsTree = treeReader_.read(projectConfig_.testsDir);
+        try {
+            auto testsLibName = projectConfig_.projectName ~ "_tests";
+            auto testsSharedLibTask = taskCreator_.createSharedLibraryTask(testsLibName,
+                    testsTree[0 .. $-1]);
+            libs ~= testsSharedLibTask;
+        }
+        catch (Error) {
+        }
+        auto testsApplicationName = projectConfig_.projectName ~ "_tests";
+        auto targetTask = taskCreator_.createApplicationTask(testsApplicationName, testsTree[$-1], libs);
+        taskRunner_.call(targetTask);
+    }
+
+private:
+    IFilesystemFacade filesystemFacade_;
+    ProjectConfig projectConfig_;
+    TreeReader treeReader_;
+    TaskCreator taskCreator_;
+    TaskRunner taskRunner_;
+}
+
 int main(string[] args) {
 
     auto options = ArgsParser.parseArgs(args);
     auto filesystemFacade = new FilesystemFacade;
 
-    auto baseDir = args[0].absolutePath.dirName;
-    auto currentDir = filesystemFacade.getCurrentDir();
-
     auto configReader = new ConfigReader(filesystemFacade);
 
+    auto baseDir = args[0].absolutePath.dirName;
     auto yabsConfig = configReader.readYabsConfig(baseDir);
     auto projectConfig = configReader.readProjectConfig(yabsConfig);
 
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
-    auto sourceGroups = treeReader.read(projectConfig.sourceDir);
-
-    auto targetType = deduceTargetType(sourceGroups);
-
-    auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
-    auto sharedLibraryTask = taskCreator.createSharedLibraryTask(projectConfig.projectName,
-            targetType == TargetType.application
-                ? sourceGroups[0 .. $-1]
-                : sourceGroups);
-
-    Task targetTask;
-    auto taskRunner = new TaskRunner(filesystemFacade);
 
     filesystemFacade.makeDir(projectConfig.buildDir);
+    auto taskCreator = new TaskCreator(filesystemFacade, projectConfig);
+    auto taskRunner = new TaskRunner(filesystemFacade);
 
-    if (targetType == TargetType.application) {
-        Task[] libs;
-        libs ~= sharedLibraryTask;
-        targetTask = taskCreator.createApplicationTask(projectConfig.projectName, sourceGroups[$-1], libs);
-        taskRunner.call(targetTask);
-        if (options.command == Command.run) {
-            auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName));
-            wait(pid);
-        }
+    IBuilder builder;
+    if (options.command == Command.test) {
+        builder = new TestsBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
     }
     else {
-        targetTask = sharedLibraryTask;
-        taskRunner.call(targetTask);
+        auto targetType = TargetType.application;
+        switch (targetType) {
+            case TargetType.application:
+                builder = new ApplicationBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
+                break;
+            case TargetType.library:
+                builder = new LibraryBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
+                break;
+            default: break;
+        }
+    }
+    builder.build(BuildType.debugBuild);
+    if (options.command == Command.run) {
+        auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName));
+        wait(pid);
+    }
+    else if (options.command == Command.test) {
+        auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName ~ "_tests"));
+        wait(pid);
     }
     return 0;
 }

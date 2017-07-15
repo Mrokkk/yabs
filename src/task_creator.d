@@ -32,7 +32,13 @@ class TaskCreator {
     Task createSharedLibraryTask(const ref string name, SourceFilesGroup[] sourceGroups) {
         Task[] tasks;
         foreach (group; sourceGroups) {
+            if (group.sourceFiles.empty) {
+                continue;
+            }
             addTasks(group, tasks);
+        }
+        if (tasks.empty) {
+            throw new Error("No tasks");
         }
         auto libraryFileName = buildPath(projectConfig_.buildDir, "lib%s.so".format(name));
         return new Task("g++ -shared -o %s %(%s%| %)".format(

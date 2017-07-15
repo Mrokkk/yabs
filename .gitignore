@@ -7,4 +7,4 @@ __test__*__
 yabs
 runtime/
 example/.build
-example/example
+example/example*
