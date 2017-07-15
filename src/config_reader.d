@@ -29,8 +29,14 @@ class ConfigReader {
 
     ProjectConfig readProjectConfig(YabsConfig yabsConfig, const string projectRoot) {
         immutable auto configFileName = buildPath(projectRoot, yabsConfig.expectedComponentConfigFileName);
-        auto json = filesystemFacade_.readText(configFileName).parseJsonString;
-        auto projectConfig = json.deserializeJson!ProjectConfig;
+        ProjectConfig projectConfig;
+        try {
+            auto json = filesystemFacade_.readText(configFileName).parseJsonString;
+            projectConfig = json.deserializeJson!ProjectConfig;
+        }
+        catch(Exception) {
+            projectConfig = new ProjectConfig;
+        }
         projectConfig.rootDir = projectRoot;
         projectConfig.sourceDir = buildPath(projectRoot, yabsConfig.expectedSourceDirName);
         projectConfig.testsDir = buildPath(projectRoot, yabsConfig.expectedTestsDirName);
