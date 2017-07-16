@@ -1,3 +1,4 @@
 {
-    "additionalFlags": "-std=c++11 -Wall"
+    "additionalFlags": "-std=c++11 -Wall",
+    "includeDirs": ["src"]
 }

@@ -27,8 +27,8 @@ class TaskCreator {
                     sourceFile.relativePath(projectConfig_.rootDir)
                 .setExtension(yabsConfig_.languagesInfo[language].objectFileExtension));
             auto input = [sourceFile, group.config.configFile];
-            tasks ~= new Task("g++ -c -MMD -fPIC -shared%s -o %s %s".format(
-                        group.config.compileFlags, outputFile, sourceFile),
+            tasks ~= new Task("g++ -c -MMD -fPIC -shared%s %(-I%s%| %) -o %s %s".format(
+                        group.config.compileFlags, group.config.includeDirs, outputFile, sourceFile),
                     input, outputFile, emptyDeps);
         }
     }

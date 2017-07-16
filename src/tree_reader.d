@@ -1,6 +1,7 @@
 module tree_reader;
 
 import std.format;
+import std.algorithm;
 import vibe.data.json;
 import std.array: array, empty;
 import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName;
@@ -27,10 +28,19 @@ class TreeReader {
         auto config = new SourceFilesConfig;
         config.configFile = path;
         try {
-            config.compileFlags = defaultConfig.compileFlags ~ " " ~ json["additionalFlags"].get!string();
+            config.compileFlags = defaultConfig.compileFlags ~ " " ~ json["additionalFlags"].get!string;
         }
         catch (JSONException) {
             config.compileFlags = defaultConfig.compileFlags;
+        }
+        try {
+            config.includeDirs = defaultConfig.includeDirs ~ json["includeDirs"]
+                .get!(Json[])
+                .map!(a => a.get!string)
+                .array;
+        }
+        catch (JSONException) {
+            config.includeDirs = defaultConfig.includeDirs;
         }
         return config;
     }

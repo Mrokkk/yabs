@@ -1,6 +1,7 @@
 #include <iostream>
+#include <header.hpp>
 
 void c() {
-    std::cout << "C\n";
+    std::cout << text;
 }
 
