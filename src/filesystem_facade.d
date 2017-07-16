@@ -1,5 +1,6 @@
 module filesystem_facade;
 
+import std.array;
 public import std.datetime: SysTime;
 public import std.file: DirIterator, SpanMode;
 import std.file: chdir, mkdirRecurse, getcwd, exists, readText, timeLastModified, dirEntries;
@@ -34,6 +35,10 @@ class FilesystemFacade : IFilesystemFacade {
 
     SysTime lastModificationTime(string fileName) {
         return fileName.timeLastModified;
+    }
+
+    DirEntry[] glob(immutable string dirName, immutable string glob) {
+        return dirEntries(dirName, glob, SpanMode.shallow).array;
     }
 
 }

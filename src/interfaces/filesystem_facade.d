@@ -1,7 +1,7 @@
 module interfaces.filesystem_facade;
 
 public import std.datetime: SysTime;
-public import std.file: DirIterator, SpanMode;
+public import std.file: DirEntry, DirIterator, SpanMode;
 
 interface IFilesystemFacade {
 
@@ -12,6 +12,7 @@ interface IFilesystemFacade {
     void changeDir(immutable string path);
     string getCurrentDir();
     SysTime lastModificationTime(string fileName);
+    DirEntry[] glob(immutable string dirName, immutable string glob);
 
 }
 

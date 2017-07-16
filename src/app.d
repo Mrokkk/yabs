@@ -2,10 +2,13 @@ module app;
 
 import std.conv;
 import std.path;
+import std.array;
 import std.stdio;
 import std.format;
 import std.getopt;
 import std.process;
+import std.algorithm;
+import core.exception;
 import core.stdc.stdlib;
 
 import interfaces.builder;
@@ -25,6 +28,18 @@ import builders.tests_builder;
 import builders.library_builder;
 import builders.application_builder;
 
+TargetType deduceTargetType(YabsConfig yabsConfig, ProjectConfig projectConfig, IFilesystemFacade filesystemFacade) {
+    try {
+        auto main = filesystemFacade.glob(projectConfig.sourceDir, "main.*")
+            .filter!(a => a.extension in yabsConfig.sourceFileExtensionToLanguageMap)
+            .array[0];
+        return TargetType.application;
+    }
+    catch (RangeError) {
+        return TargetType.library;
+    }
+}
+
 int main(string[] argv) {
 
     auto args = ArgsParser.parseArgs(argv);
@@ -35,6 +50,10 @@ int main(string[] argv) {
     auto baseDir = argv[0].absolutePath.dirName;
     auto yabsConfig = configReader.readYabsConfig(baseDir);
     auto projectConfig = configReader.readProjectConfig(yabsConfig);
+
+    if (projectConfig.targetType == TargetType.none) {
+        projectConfig.targetType = deduceTargetType(yabsConfig, projectConfig, filesystemFacade);
+    }
 
     writeln("# Project name: %s".format(projectConfig.projectName));
     writeln("# Target type: %s".format(projectConfig.targetType));

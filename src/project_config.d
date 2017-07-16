@@ -3,7 +3,7 @@ module project_config;
 import vibe.data.json: optional, ignore, byName;
 
 enum TargetType {
-    application, library
+    none, application, library
 }
 
 class ProjectConfig {
@@ -12,6 +12,6 @@ class ProjectConfig {
     @ignore string sourceDir;
     @ignore string testsDir;
     @ignore string buildDir;
-    @byName TargetType targetType;
+    @optional @byName TargetType targetType = TargetType.none;
 }
 
