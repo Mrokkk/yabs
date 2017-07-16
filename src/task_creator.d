@@ -4,6 +4,7 @@ import std.path;
 import std.array;
 import std.format;
 import std.algorithm;
+import std.exception;
 
 public import task;
 import yabs_config;
@@ -41,9 +42,7 @@ class TaskCreator {
             }
             addTasks(group, tasks);
         }
-        if (tasks.empty) {
-            throw new Error("No tasks");
-        }
+        enforce!Error(!tasks.empty, "No tasks");
         auto libraryPath = buildPath(location, "lib%s.so".format(name));
         return new Task("g++ -shared -o %s %(%s%| %)".format(
                     libraryPath, tasks.map!(a => a.output).array),
