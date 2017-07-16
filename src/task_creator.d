@@ -33,7 +33,7 @@ class TaskCreator {
         }
     }
 
-    Task createSharedLibraryTask(const ref string name, SourceFilesGroup[] sourceGroups) {
+    Task createSharedLibraryTask(const ref string name, const string location, SourceFilesGroup[] sourceGroups) {
         Task[] tasks;
         foreach (group; sourceGroups) {
             if (group.sourceFiles.empty) {
@@ -44,10 +44,10 @@ class TaskCreator {
         if (tasks.empty) {
             throw new Error("No tasks");
         }
-        auto libraryFileName = buildPath(projectConfig_.buildDir, "lib%s.so".format(name));
+        auto libraryPath = buildPath(location, "lib%s.so".format(name));
         return new Task("g++ -shared -o %s %(%s%| %)".format(
-                    libraryFileName, tasks.map!(a => a.output).array),
-                tasks.map!(a => a.input[0]).array, libraryFileName, tasks);
+                    libraryPath, tasks.map!(a => a.output).array),
+                tasks.map!(a => a.input[0]).array, libraryPath, tasks);
     }
 
     Task createApplicationTask(const ref string name, const ref SourceFilesGroup main, Task[] libraries) {

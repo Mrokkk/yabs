@@ -7,7 +7,7 @@ import std.getopt;
 import core.stdc.stdlib;
 
 enum Command {
-    build, test, run
+    defaultCommand, build, test, run
 }
 
 enum BuildType {
@@ -15,7 +15,7 @@ enum BuildType {
 }
 
 class Args {
-    Command command = Command.run;
+    Command command = Command.defaultCommand;
     BuildType buildType = BuildType.debugBuild;
     bool verbose = false;
 }

@@ -21,7 +21,7 @@ class ApplicationBuilder : IBuilder {
     void build(BuildType buildType) {
         auto sourceFilesGroups = treeReader_.read(projectConfig_.sourceDir);
         auto sharedLibraryTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
-                sourceFilesGroups[0 .. $-1]);
+                projectConfig_.buildDir, sourceFilesGroups[0 .. $-1]);
         Task targetTask;
         auto libs = [sharedLibraryTask];
         targetTask = taskCreator_.createApplicationTask(projectConfig_.projectName, sourceFilesGroups[$-1], libs);

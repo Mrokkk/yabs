@@ -40,6 +40,11 @@ TargetType deduceTargetType(YabsConfig yabsConfig, ProjectConfig projectConfig, 
     }
 }
 
+immutable enum Command[TargetType] defaultCommands = [
+    TargetType.application: Command.run,
+    TargetType.library: Command.build
+];
+
 int main(string[] argv) {
 
     auto args = ArgsParser.parseArgs(argv);
@@ -72,6 +77,9 @@ int main(string[] argv) {
         builder = new TestsBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
     }
     else {
+        if (args.command == Command.defaultCommand) {
+            args.command = defaultCommands[projectConfig.targetType];
+        }
         switch (projectConfig.targetType) {
             case TargetType.application:
                 builder = new ApplicationBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);

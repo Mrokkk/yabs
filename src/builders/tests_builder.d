@@ -21,13 +21,13 @@ class TestsBuilder : IBuilder {
     void build(BuildType buildType) {
         auto sourceTree = treeReader_.read(projectConfig_.sourceDir);
         auto sourceSharedLibTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
-                sourceTree[0 .. $-1]);
+                projectConfig_.buildDir, sourceTree[0 .. $-1]);
         Task[] libs = [sourceSharedLibTask];
         auto testsTree = treeReader_.read(projectConfig_.testsDir);
         try {
             auto testsLibName = projectConfig_.projectName ~ "_tests";
             auto testsSharedLibTask = taskCreator_.createSharedLibraryTask(testsLibName,
-                    testsTree[0 .. $-1]);
+                    projectConfig_.buildDir, testsTree[0 .. $-1]);
             libs ~= testsSharedLibTask;
         }
         catch (Error) {
