@@ -29,17 +29,21 @@ class ConfigReader {
         return json.deserializeJson!YabsConfig;
     }
 
+    void setDirs(ProjectConfig projectConfig, const string projectRoot, YabsConfig yabsConfig) {
+        projectConfig.rootDir = projectRoot;
+        projectConfig.sourceDir = buildPath(projectRoot, yabsConfig.expectedSourceDirName);
+        projectConfig.testsDir = buildPath(projectRoot, yabsConfig.expectedTestsDirName);
+        projectConfig.buildDir = buildPath(projectRoot, yabsConfig.buildDirName);
+    }
+
     ProjectConfig readProjectConfig(YabsConfig yabsConfig) {
-        auto projectRoot = filesystemFacade_.getCurrentDir();
+        const auto projectRoot = filesystemFacade_.getCurrentDir();
         immutable auto configFileName = buildPath(projectRoot, yabsConfig.expectedComponentConfigFileName);
         ProjectConfig projectConfig;
         auto json = filesystemFacade_.readText(configFileName).parseJsonString;
         projectConfig = json.deserializeJson!ProjectConfig;
         projectConfig.projectName = projectRoot.baseName;
-        projectConfig.rootDir = projectRoot;
-        projectConfig.sourceDir = buildPath(projectRoot, yabsConfig.expectedSourceDirName);
-        projectConfig.testsDir = buildPath(projectRoot, yabsConfig.expectedTestsDirName);
-        projectConfig.buildDir = buildPath(projectRoot, yabsConfig.buildDirName);
+        setDirs(projectConfig, projectRoot, yabsConfig);
         return projectConfig;
     }
 
