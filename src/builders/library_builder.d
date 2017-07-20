@@ -19,9 +19,9 @@ class LibraryBuilder : IBuilder {
     }
 
     void build(BuildType buildType) {
-        auto sourceFilesGroups = treeReader_.read(projectConfig_.sourceDir);
         auto sharedLibraryTask = taskCreator_.createSharedLibraryTask(projectConfig_.projectName,
-                projectConfig_.rootDir, sourceFilesGroups);
+                projectConfig_.rootDir,
+                treeReader_.read(projectConfig_.sourceDir));
         taskRunner_.call(sharedLibraryTask);
     }
 
