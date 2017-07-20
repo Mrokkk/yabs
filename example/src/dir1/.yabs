@@ -1,3 +1,8 @@
 {
-    "additionalFlags": "-std=c++11"
+    "additionalFlags": "-std=c++11",
+    "sources": {
+        "a.cpp": {
+            "additionalFlags": "-std=c++11"
+        }
+    }
 }

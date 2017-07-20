@@ -5,6 +5,7 @@ import std.stdio;
 import std.format;
 import std.string;
 import std.process;
+import std.algorithm;
 
 public import task;
 import interfaces.filesystem_facade;
@@ -19,10 +20,7 @@ class TaskRunner {
         if (!filesystemFacade_.fileExists(targetName)) {
             return true;
         }
-        foreach (object; objects) {
-            if (object.empty) {
-                continue;
-            }
+        foreach (object; objects.filter!(a => !a.empty)) {
             if (filesystemFacade_.lastModificationTime(targetName) <
                     filesystemFacade_.lastModificationTime(object)) {
                 return true;
@@ -32,9 +30,7 @@ class TaskRunner {
     }
 
     void call(const Task task) {
-        foreach (t; task.dependencies) {
-            call(t);
-        }
+        task.dependencies.each!(d => call(d));
         if (isOutdated(task.output, task.input)) {
             filesystemFacade_.makeDir(task.output.dirName);
             writeln("Building %s".format(task.command));
