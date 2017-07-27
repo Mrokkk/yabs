@@ -17,6 +17,27 @@ class TreeReader {
         yabsConfig_ = yabsConfig;
     }
 
+    private string createCompileFlags(const string parentCompileFlags, Json json) {
+        try {
+            return parentCompileFlags ~ " " ~ json["additionalFlags"].get!string;
+        }
+        catch (JSONException) {
+            return parentCompileFlags;
+        }
+    }
+
+    private string[] createIncludeDirs(const string[] parentIncludeDirs, Json json) {
+        try {
+            return parentIncludeDirs ~ json["includeDirs"]
+                .get!(Json[])
+                .map!(a => a.get!string)
+                .array;
+        }
+        catch (JSONException) {
+            return cast(string[])parentIncludeDirs;
+        }
+    }
+
     SourceFilesConfig readConfig(const string path, SourceFilesConfig defaultConfig) {
         Json json;
         try {
@@ -25,23 +46,8 @@ class TreeReader {
         catch (JSONException) {
             throw new Error("Not a JSON file: %s".format(path));
         }
-        auto config = new SourceFilesConfig;
-        config.configFile = path;
-        try {
-            config.compileFlags = defaultConfig.compileFlags ~ " " ~ json["additionalFlags"].get!string;
-        }
-        catch (JSONException) {
-            config.compileFlags = defaultConfig.compileFlags;
-        }
-        try {
-            config.includeDirs = defaultConfig.includeDirs ~ json["includeDirs"]
-                .get!(Json[])
-                .map!(a => a.get!string)
-                .array;
-        }
-        catch (JSONException) {
-            config.includeDirs = defaultConfig.includeDirs;
-        }
+        auto config = new SourceFilesConfig(path, createCompileFlags(defaultConfig.compileFlags, json),
+                createIncludeDirs(defaultConfig.includeDirs, json));
         return config;
     }
 

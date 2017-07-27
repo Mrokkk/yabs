@@ -1,9 +1,23 @@
 module source_files_group;
 
 class SourceFilesConfig {
-    string configFile;
-    string compileFlags;
-    string[] includeDirs;
+
+    this() {
+        configFile = "";
+        compileFlags = "";
+        includeDirs = [];
+    }
+
+    this(const string configFile, const string compileFlags,
+            const string[] includeDirs) {
+        this.configFile = configFile;
+        this.compileFlags = compileFlags;
+        this.includeDirs = cast(immutable)includeDirs;
+    }
+
+    immutable string configFile;
+    immutable string compileFlags;
+    immutable string[] includeDirs;
 }
 
 class SourceFilesGroup {
