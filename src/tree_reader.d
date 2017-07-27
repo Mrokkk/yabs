@@ -7,7 +7,7 @@ import std.array: array, empty;
 import std.path: dirName, extension, absolutePath, buildPath, stripExtension, baseName;
 
 import yabs_config;
-public import source_files_group;
+public import tree;
 import interfaces.filesystem_facade;
 
 class TreeReader {
@@ -80,13 +80,13 @@ class TreeReader {
         return mainGroup;
     }
 
-    SourceFilesGroup[] read(const string path) {
+    Tree read(const string path) {
         SourceFilesGroup[] groups;
         auto mainGroup = readRecursively(path, new SourceFilesConfig, groups);
         if (!mainGroup.sourceFiles.empty) {
             groups ~= mainGroup;
         }
-        return groups;
+        return new Tree(groups, new Compiler("g++"));
     }
 
 private:

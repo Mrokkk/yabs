@@ -4,7 +4,7 @@ import std.format;
 
 import source_files_group;
 
-class GccCompiler {
+class Compiler {
 
     this(const string path) {
         path_ = path;
