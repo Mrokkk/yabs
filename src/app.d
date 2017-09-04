@@ -21,9 +21,7 @@ import project_config;
 import filesystem_facade;
 import source_files_group;
 
-import builders.tests_builder;
-import builders.library_builder;
-import builders.application_builder;
+import builders.builder_factory;
 
 TargetType deduceTargetType(YabsConfig yabsConfig, ProjectConfig projectConfig, IFilesystemFacade filesystemFacade) {
     try {
@@ -42,14 +40,20 @@ immutable enum Command[TargetType] defaultCommands = [
     TargetType.library: Command.build
 ];
 
+void resolveArgsCommand(ref Args args, const ProjectConfig projectConfig) {
+    if (args.command == Command.defaultCommand) {
+        args.command = defaultCommands[projectConfig.targetType];
+    }
+}
+
 int main(string[] argv) {
+
+    const auto baseDir = argv[0].absolutePath.dirName;
 
     auto args = ArgsParser.parseArgs(argv);
     auto filesystemFacade = new FilesystemFacade;
 
     auto configReader = new ConfigReader(filesystemFacade);
-
-    auto baseDir = argv[0].absolutePath.dirName;
     auto yabsConfig = configReader.readYabsConfig(baseDir);
     auto projectConfig = configReader.readProjectConfig(yabsConfig);
 
@@ -63,31 +67,17 @@ int main(string[] argv) {
     writeln("");
 
     auto treeReader = new TreeReader(filesystemFacade, yabsConfig);
-
-    filesystemFacade.makeDir(projectConfig.buildDir);
     auto taskCreator = new TaskCreator(filesystemFacade, yabsConfig, projectConfig);
     auto taskRunner = new TaskRunner(filesystemFacade);
 
-    IBuilder builder;
+    filesystemFacade.makeDir(projectConfig.buildDir);
 
-    if (args.command == Command.test) {
-        builder = new TestsBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
-    }
-    else {
-        if (args.command == Command.defaultCommand) {
-            args.command = defaultCommands[projectConfig.targetType];
-        }
-        switch (projectConfig.targetType) {
-            case TargetType.application:
-                builder = new ApplicationBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
-                break;
-            case TargetType.library:
-                builder = new LibraryBuilder(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
-                break;
-            default: break;
-        }
-    }
+    resolveArgsCommand(args, projectConfig);
+    auto builderFactory = new BuilderFactory(filesystemFacade, projectConfig, treeReader, taskCreator, taskRunner);
+    auto builder = builderFactory.create(args);
+
     builder.build(args.buildType);
+
     if (args.command == Command.run) {
         auto pid = spawnShell(buildPath(projectConfig.rootDir, projectConfig.projectName));
         wait(pid);
